@@ -29,7 +29,6 @@ pub fn save_weather_to_file(city: &str, weather_data: &Value) -> io::Result<()> 
 
     Ok(())
 }
-
 pub fn load_weather_history() -> io::Result<Vec<Value>> {
     let file = File::open("weather_history.json");
 
@@ -37,12 +36,17 @@ pub fn load_weather_history() -> io::Result<Vec<Value>> {
         Ok(mut f) => {
             let mut data = String::new();
             f.read_to_string(&mut data)?;
-            let history: Vec<Value> = serde_json::from_str(&data)?;
-            Ok(history)
+            if data.trim().is_empty() {
+                Ok(Vec::new()) // Return empty history if file is empty
+            } else {
+                let history: Vec<Value> = serde_json::from_str(&data)?;
+                Ok(history)
+            }
         }
         Err(_) => Ok(Vec::new()), // Return empty history if file doesn't exist
     }
 }
+
 pub fn clean_old_data() -> io::Result<()> {
     let history: Vec<Value> = load_weather_history()?;  //Loading current weather history
     let current_timestamp = get_current_timestamp();  //Get current time

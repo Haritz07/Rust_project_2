@@ -1,4 +1,6 @@
 use clap::Parser;
+use dotenv::dotenv;
+use std::env;
 use reqwest::blocking::get;
 use serde_json::Value;
 use std::error::Error;
@@ -58,6 +60,7 @@ fn summarize_daily_temps(daily_data: HashMap<String, Vec<f64>>) {
 }
 
 fn main() {
+    dotenv().ok();
     let args = Args::parse();
 
     //Clean old history entriesbefore new fetch
@@ -77,14 +80,17 @@ fn main() {
         },
     };
 
-    let api_key = "c9f83bbf47865db6323f9b4fb45ddff9";
-    match fetch_weather(&city, api_key, &args.units) {
+    let api_key = env::var("API_KEY").expect("API key not found");
+    match fetch_weather(&city, &api_key, &args.units) {
         Ok(forecast_data) => {
             //save waether data
             history::save_weather_to_file(&city, &forecast_data).expect("Failed to save weather data");
+            
             let daily_data = group_forecast_by_day(&forecast_data);
             summarize_daily_temps(daily_data);
         }
         Err(e) => eprintln!("Error fetching weather: {}", e),
     }
 }
+
+
